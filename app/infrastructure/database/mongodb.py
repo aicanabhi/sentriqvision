@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 client: Optional[AsyncIOMotorClient] = None
 
 
+
 async def get_database() -> AsyncIOMotorDatabase:
     global client
     try:
@@ -25,8 +26,3 @@ async def get_database() -> AsyncIOMotorDatabase:
     return client[settings.MONGO_DB_NAME]
 
 
-async def close_database_connection():
-    global client
-    if client:
-        client.close()
-        logger.info("MongoDB connection closed.")

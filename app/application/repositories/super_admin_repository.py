@@ -1,9 +1,8 @@
-
 from typing import Optional
 from app.application.repositories.base_repository import BaseRepository
 
-
 class SuperAdminRepository(BaseRepository):
+
     def __init__(self, db):
         super().__init__(db, "super_admin")
 

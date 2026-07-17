@@ -12,3 +12,6 @@ class OrganizationAdminRepository(BaseRepository):
 
     async def get_by_organization_id(self, organization_id: str) -> Optional[dict]:
         return await self.get_by_field("organization_id", organization_id)
+
+    async def get_by_id(self, user_id: str) -> Optional[dict]:
+        return await self.get_by_field("id", user_id)
