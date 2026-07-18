@@ -58,7 +58,9 @@ def create_refresh_token(data: dict):
 
 def verify_token(token: str):
 
-    print("VERIFY SECRET KEY:", settings.SECRET_KEY)
+    print("=" * 50)
+    print("TOKEN RAW:", repr(token))
+    print("VERIFY SECRET KEY:", repr(settings.SECRET_KEY))
 
     try:
         payload = jwt.decode(

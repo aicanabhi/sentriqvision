@@ -105,7 +105,7 @@ async def get_super_admin(
     current_user = Depends(get_current_user)
 ):
 
-    if current_user.get("role") != Role.SUPER_ADMIN:
+    if current_user.get("role") != Role.SUPER_ADMIN.value:
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -131,5 +131,25 @@ async def get_organization_admin(
             detail="Organization Admin access required"
         )
 
+
+    return current_user
+
+# ==================================
+# SUPER ADMIN OR ORGANIZATION ADMIN
+# ==================================
+
+async def get_admin_or_super_admin(
+    current_user = Depends(get_current_user)
+):
+
+    if current_user.get("role") not in [
+        Role.SUPER_ADMIN.value,
+        Role.ORGANIZATION_ADMIN.value
+    ]:
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
 
     return current_user
