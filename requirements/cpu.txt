@@ -1,0 +1,13 @@
+-r base.txt
+
+torch
+torchvision
+torchaudio
+
+ultralytics
+
+onnxruntime
+
+easyocr
+
+insightface
