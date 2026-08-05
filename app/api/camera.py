@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
     Query,
     status,
 )
@@ -30,7 +31,10 @@ from app.schemas.camera import (
 from app.services.camera_service import CameraService
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/cameras",
+    tags=["Camera"],
+)
 
 
 # ==========================================================
@@ -47,9 +51,6 @@ async def create_camera(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Register a new AI camera.
-    """
 
     service = CameraService(db)
 
@@ -59,42 +60,30 @@ async def create_camera(
 
 
 # ==========================================================
-# List Cameras
+# Get All Cameras
 # ==========================================================
 
-@router.get("")
-async def list_cameras(
-    page: int = Query(
-        default=1,
-        ge=1,
+@router.get(
+    "",
+    response_model=list[CameraResponse],
+)
+async def get_cameras(
+    organization_id: UUID | None = Query(
+        default=None
     ),
-
-    per_page: int = Query(
-        default=20,
-        ge=1,
-        le=100,
-    ),
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_active_user
-    ),
+    current_user=Depends(get_current_active_user),
 ):
-    """
-    Get all cameras.
-    """
 
     service = CameraService(db)
 
-    return await service.list_cameras(
-        page,
-        per_page,
+    return await service.get_cameras(
+        organization_id
     )
 
 
 # ==========================================================
-# Get Camera
+# Get Camera By ID
 # ==========================================================
 
 @router.get(
@@ -103,22 +92,23 @@ async def list_cameras(
 )
 async def get_camera(
     camera_id: UUID,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_active_user
-    ),
+    current_user=Depends(get_current_active_user),
 ):
-    """
-    Get camera details.
-    """
 
     service = CameraService(db)
 
-    return await service.get_camera(
+    camera = await service.get_camera(
         camera_id
     )
+
+    if camera is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Camera not found",
+        )
+
+    return camera
 
 
 # ==========================================================
@@ -131,25 +121,25 @@ async def get_camera(
 )
 async def update_camera(
     camera_id: UUID,
-
     camera: CameraUpdate,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_org_admin
-    ),
+    current_user=Depends(get_current_org_admin),
 ):
-    """
-    Update camera configuration.
-    """
 
     service = CameraService(db)
 
-    return await service.update_camera(
+    result = await service.update_camera(
         camera_id,
         camera,
     )
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Camera not found",
+        )
+
+    return result
 
 
 # ==========================================================
@@ -161,54 +151,17 @@ async def update_camera(
 )
 async def delete_camera(
     camera_id: UUID,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_org_admin
-    ),
+    current_user=Depends(get_current_org_admin),
 ):
-    """
-    Remove camera.
-    """
 
     service = CameraService(db)
 
-    await service.delete_camera(
+    result = await service.delete_camera(
         camera_id
     )
 
-    return {
-        "success": True,
-        "message": "Camera deleted successfully",
-    }
-
-
-# ==========================================================
-# Camera Health
-# ==========================================================
-
-@router.get(
-    "/{camera_id}/health"
-)
-async def camera_health(
-    camera_id: UUID,
-
-    db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_active_user
-    ),
-):
-    """
-    Get camera health status.
-    """
-
-    service = CameraService(db)
-
-    return await service.get_health(
-        camera_id
-    )
+    return result
 
 
 # ==========================================================
@@ -220,20 +173,13 @@ async def camera_health(
 )
 async def start_camera(
     camera_id: UUID,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_org_admin
-    ),
+    current_user=Depends(get_current_org_admin),
 ):
-    """
-    Start RTSP/AI processing stream.
-    """
 
     service = CameraService(db)
 
-    return await service.start_camera(
+    return await service.start_stream(
         camera_id
     )
 
@@ -247,46 +193,12 @@ async def start_camera(
 )
 async def stop_camera(
     camera_id: UUID,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_org_admin
-    ),
+    current_user=Depends(get_current_org_admin),
 ):
-    """
-    Stop camera stream.
-    """
 
     service = CameraService(db)
 
-    return await service.stop_camera(
-        camera_id
-    )
-
-
-# ==========================================================
-# Camera Status
-# ==========================================================
-
-@router.get(
-    "/{camera_id}/status"
-)
-async def camera_status(
-    camera_id: UUID,
-
-    db: AsyncSession = Depends(get_db),
-
-    current_user=Depends(
-        get_current_active_user
-    ),
-):
-    """
-    Current camera status.
-    """
-
-    service = CameraService(db)
-
-    return await service.get_status(
+    return await service.stop_stream(
         camera_id
     )

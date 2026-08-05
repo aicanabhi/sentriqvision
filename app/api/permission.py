@@ -10,6 +10,7 @@ from fastapi import (
     APIRouter,
     Depends,
     status,
+    HTTPException,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +36,6 @@ router = APIRouter()
 # Create Permission
 # ==========================================================
 
-
 @router.post(
     "",
     response_model=PermissionResponse,
@@ -46,26 +46,14 @@ async def create_permission(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Create new permission.
-
-    Example:
-    camera:create
-    camera:view
-    user:delete
-    """
-
     service = PermissionService(db)
 
-    return await service.create_permission(
-        permission
-    )
+    return await service.create_permission(permission)
 
 
 # ==========================================================
 # Get All Permissions
 # ==========================================================
-
 
 @router.get(
     "",
@@ -75,20 +63,14 @@ async def get_permissions(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Get all permissions.
-    """
-
     service = PermissionService(db)
 
     return await service.get_permissions()
 
 
-
 # ==========================================================
 # Get Permission By ID
 # ==========================================================
-
 
 @router.get(
     "/{permission_id}",
@@ -99,22 +81,22 @@ async def get_permission(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Get permission details.
-    """
-
     service = PermissionService(db)
 
-    return await service.get_permission(
-        permission_id
-    )
+    permission = await service.get_permission(permission_id)
 
+    if permission is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Permission not found",
+        )
+
+    return permission
 
 
 # ==========================================================
 # Update Permission
 # ==========================================================
-
 
 @router.put(
     "/{permission_id}",
@@ -126,41 +108,41 @@ async def update_permission(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Update permission.
-    """
-
     service = PermissionService(db)
 
-    return await service.update_permission(
+    permission = await service.update_permission(
         permission_id,
         permission,
     )
 
+    if permission is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Permission not found",
+        )
+
+    return permission
 
 
 # ==========================================================
 # Delete Permission
 # ==========================================================
 
-
-@router.delete(
-    "/{permission_id}",
-)
+@router.delete("/{permission_id}")
 async def delete_permission(
     permission_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Delete permission.
-    """
-
     service = PermissionService(db)
 
-    await service.delete_permission(
-        permission_id
-    )
+    success = await service.delete_permission(permission_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail="Permission not found",
+        )
 
     return {
         "success": True,
@@ -168,11 +150,9 @@ async def delete_permission(
     }
 
 
-
 # ==========================================================
 # Assign Permission To Role
 # ==========================================================
-
 
 @router.post(
     "/{permission_id}/roles/{role_id}",
@@ -183,10 +163,6 @@ async def assign_permission_to_role(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Assign permission to role.
-    """
-
     service = PermissionService(db)
 
     return await service.assign_to_role(
@@ -195,11 +171,9 @@ async def assign_permission_to_role(
     )
 
 
-
 # ==========================================================
 # Remove Permission From Role
 # ==========================================================
-
 
 @router.delete(
     "/{permission_id}/roles/{role_id}",
@@ -210,16 +184,18 @@ async def remove_permission_from_role(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
-    """
-    Remove permission from role.
-    """
-
     service = PermissionService(db)
 
-    await service.remove_from_role(
+    success = await service.remove_from_role(
         permission_id,
         role_id,
     )
+
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail="Permission mapping not found",
+        )
 
     return {
         "success": True,

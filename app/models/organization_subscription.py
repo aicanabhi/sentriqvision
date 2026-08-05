@@ -17,7 +17,7 @@ from sqlalchemy import (
     String,
 )
 
-from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -76,23 +76,23 @@ class OrganizationSubscription(
     # ======================================================
 
     organization_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "organizations.id",
-            ondelete="CASCADE",
-        ),
-        nullable=False,
-        index=True,
+    String,
+    ForeignKey(
+        "organizations.id",
+        ondelete="CASCADE",
+    ),
+    nullable=False,
+    index=True,
     )
 
     plan_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "plans.id",
-            ondelete="RESTRICT",
-        ),
-        nullable=False,
-        index=True,
+    String,
+    ForeignKey(
+        "plans.id",
+        ondelete="RESTRICT",
+    ),
+    nullable=False,
+    index=True,
     )
 
     # ======================================================

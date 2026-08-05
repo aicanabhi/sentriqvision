@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 class CameraHealth(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "camera_health"
 
-    camera_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("cameras.id", ondelete="CASCADE"), unique=True
+    camera_id: Mapped[str] = mapped_column(
+        String, ForeignKey("cameras.id", ondelete="CASCADE"), unique=True
     )
     is_online: Mapped[bool] = mapped_column(default=False, nullable=False)
     fps: Mapped[float | None] = mapped_column(Float, nullable=True)

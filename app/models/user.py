@@ -17,21 +17,26 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from app.models.base import Base
+from app.models.base import (
+    Base,
+    UUIDMixin,
+    TimestampMixin,
+    ActiveMixin,
+)
 
 
-class User(Base):
+class User(
+    Base,
+    UUIDMixin,
+    TimestampMixin,
+    ActiveMixin,
+):
     """
     System User Model
     """
 
     __tablename__ = "users"
 
-
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True
-    )
 
 
     email: Mapped[str] = mapped_column(
@@ -61,11 +66,7 @@ class User(Base):
     )
 
 
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True
-    )
-
+    
 
     is_super_admin: Mapped[bool] = mapped_column(
         Boolean,
@@ -73,24 +74,11 @@ class User(Base):
     )
 
 
-    organization_id: Mapped[int | None] = mapped_column(
+    organization_id: Mapped[str | None] = mapped_column(
         ForeignKey(
             "organizations.id"
         ),
         nullable=True
-    )
-
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow
-    )
-
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
 
@@ -139,3 +127,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete"
     )
+
+    audit_logs = relationship(
+    "Audit",
+    back_populates="user",
+    cascade="all, delete-orphan",
+    )  

@@ -14,7 +14,7 @@ from sqlalchemy import (
     String,
 )
 
-from sqlalchemy.dialects.postgresql import UUID
+
 
 from sqlalchemy.orm import (
     Mapped,
@@ -49,14 +49,14 @@ class OrganizationSetting(
     # ==========================================================
 
     organization_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "organizations.id",
-            ondelete="CASCADE"
-        ),
-        unique=True,
-        nullable=False,
-        index=True,
+    String,
+    ForeignKey(
+        "organizations.id",
+        ondelete="CASCADE"
+    ),
+    unique=True,
+    nullable=False,
+    index=True,
     )
 
 

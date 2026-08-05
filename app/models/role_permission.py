@@ -9,10 +9,9 @@ from __future__ import annotations
 from sqlalchemy import (
     Boolean,
     ForeignKey,
+    String,
     UniqueConstraint,
 )
-
-from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import (
     Mapped,
@@ -57,7 +56,7 @@ class RolePermission(
     # =====================================================
 
     role_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "roles.id",
             ondelete="CASCADE",
@@ -67,7 +66,7 @@ class RolePermission(
     )
 
     permission_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "permissions.id",
             ondelete="CASCADE",
@@ -94,7 +93,6 @@ class RolePermission(
         "Role",
         back_populates="permissions",
     )
-
     permission = relationship(
         "Permission",
         back_populates="roles",

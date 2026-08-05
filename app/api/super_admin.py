@@ -18,8 +18,10 @@ from app.services.organization_service import OrganizationService
 from app.services.user_service import UserService
 
 
-router = APIRouter()
 
+router = APIRouter(
+    tags=["Super Admin"]
+)
 
 # ==========================================================
 # Dashboard Statistics
@@ -61,9 +63,9 @@ async def super_admin_dashboard(
 # ==========================================================
 
 @router.get(
-    "/organizations",
-    tags=["Super Admin"],
+    "/organizations"
 )
+
 async def get_all_organizations(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
@@ -74,7 +76,10 @@ async def get_all_organizations(
 
     service = OrganizationService(db)
 
-    return await service.list_all()
+    return await service.list_organizations(
+        page=1,
+        per_page=100,
+    )
 
 
 
@@ -147,9 +152,10 @@ async def disable_organization(
 
     service = OrganizationService(db)
 
-    return await service.disable_organization(
-        organization_id
-    )
+    return await service.deactivate_organization(
+    organization_id
+)
+    
 
 
 
@@ -171,7 +177,10 @@ async def get_all_users(
 
     service = UserService(db)
 
-    return await service.list_all_users()
+    return await service.list_users(
+    page=1,
+    per_page=100,
+)
 
 
 

@@ -6,120 +6,206 @@ Business logic for camera management.
 
 from uuid import UUID
 
+from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.camera import Camera
 
 
 class CameraService:
-    """
-    Handles camera operations.
-    """
 
     def __init__(self, db: AsyncSession):
         self.db = db
 
 
+    # ======================================================
+    # Create Camera
+    # ======================================================
+
     async def create_camera(self, camera_data):
-        """
-        Create new camera.
-        """
 
-        # TODO:
-        # Call camera repository
-        # Save camera into database
+        camera = Camera(
+            organization_id=str(camera_data.organization_id),
+            camera_group_id=(
+                str(camera_data.camera_group_id)
+                if camera_data.camera_group_id
+                else None
+            ),
 
-        return {
-            "success": True,
-            "message": "Camera created",
-            "data": camera_data,
-        }
+            name=camera_data.name,
+            description=camera_data.description,
+            location=camera_data.location,
 
+            ip_address=camera_data.ip_address,
+            port=camera_data.port,
+
+            manufacturer=camera_data.manufacturer,
+            model_name=camera_data.model,
+            serial_number=camera_data.serial_number,
+
+            rtsp_url=camera_data.rtsp_url,
+            username=camera_data.username,
+            password=camera_data.password,
+
+            resolution=camera_data.resolution,
+            fps=camera_data.fps,
+            codec=camera_data.codec,
+
+            ai_enabled=camera_data.ai_enabled,
+        )
+
+
+        self.db.add(camera)
+
+        await self.db.commit()
+
+        await self.db.refresh(camera)
+
+        return camera
+
+
+
+    # ======================================================
+    # Get Cameras
+    # ======================================================
 
     async def get_cameras(
         self,
         organization_id: UUID | None = None,
     ):
-        """
-        Get all cameras.
-        """
 
-        # TODO:
-        # Fetch cameras from repository
+        query = select(Camera)
 
-        return []
 
+        if organization_id:
+            query = query.where(
+                Camera.organization_id == str(organization_id)
+            )
+
+
+        result = await self.db.execute(query)
+
+
+        return result.scalars().all()
+
+
+
+    # ======================================================
+    # Get Single Camera
+    # ======================================================
 
     async def get_camera(
         self,
-        camera_id: UUID,
+        camera_id: UUID
     ):
-        """
-        Get single camera.
-        """
 
-        # TODO:
-        # Fetch camera by id
+        result = await self.db.execute(
+            select(Camera).where(
+                Camera.id == str(camera_id)
+            )
+        )
 
-        return None
 
+        return result.scalar_one_or_none()
+
+
+
+    # ======================================================
+    # Update Camera
+    # ======================================================
 
     async def update_camera(
         self,
         camera_id: UUID,
         camera_data,
     ):
-        """
-        Update camera.
-        """
 
-        # TODO:
-        # Update camera
+        camera = await self.get_camera(camera_id)
 
-        return {
-            "success": True,
-            "message": "Camera updated",
-        }
 
+        if not camera:
+            return None
+
+
+        data = camera_data.model_dump(
+            exclude_unset=True
+        )
+
+
+        for key,value in data.items():
+
+            if hasattr(camera,key):
+                setattr(
+                    camera,
+                    key,
+                    value
+                )
+
+
+        await self.db.commit()
+
+        await self.db.refresh(camera)
+
+
+        return camera
+
+
+
+    # ======================================================
+    # Delete Camera
+    # ======================================================
 
     async def delete_camera(
         self,
-        camera_id: UUID,
+        camera_id: UUID
     ):
-        """
-        Delete camera.
-        """
 
-        # TODO:
-        # Delete camera
+
+        camera = await self.get_camera(camera_id)
+
+
+        if not camera:
+            raise HTTPException(
+                status_code=404,
+                detail="Camera not found"
+            )
+
+
+        await self.db.delete(camera)
+
+        await self.db.commit()
+
 
         return {
-            "success": True,
-            "message": "Camera deleted",
+            "success":True,
+            "message":"Camera deleted successfully"
         }
 
+
+
+    # ======================================================
+    # Stream
+    # ======================================================
 
     async def start_stream(
         self,
-        camera_id: UUID,
+        camera_id: UUID
     ):
-        """
-        Start camera stream.
-        """
 
         return {
-            "success": True,
-            "message": "Camera stream started",
+            "success":True,
+            "message":"Camera stream started"
         }
+
 
 
     async def stop_stream(
         self,
-        camera_id: UUID,
+        camera_id: UUID
     ):
-        """
-        Stop camera stream.
-        """
 
         return {
-            "success": True,
-            "message": "Camera stream stopped",
+            "success":True,
+            "message":"Camera stream stopped"
         }

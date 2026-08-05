@@ -1,206 +1,174 @@
 """
-Role API
-
-Role Management Endpoints
+Role Service
 """
-
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.deps import (
-    get_db,
-    get_current_org_admin,
-    pagination_params,
-)
-from app.schemas.role import (
-    RoleCreate,
-    RoleUpdate,
-    RoleResponse,
-)
-from app.services.role_service import RoleService
+from fastapi import APIRouter
 
 router = APIRouter()
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.role import Role
 
 
-# ==========================================================
-# Create Role
-# ==========================================================
+class RoleService:
 
-@router.post(
-    "",
-    response_model=RoleResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_role(
-    role: RoleCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Create a new role.
-    """
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
-    service = RoleService(db)
+    # ==========================================================
+    # Create Role
+    # ==========================================================
 
-    return await service.create_role(role)
+    async def create_role(self, role_data):
 
+        role = Role(**role_data.model_dump())
 
-# ==========================================================
-# List Roles
-# ==========================================================
+        self.db.add(role)
 
-@router.get("")
-async def list_roles(
-    pagination=Depends(pagination_params),
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    List all roles.
-    """
+        await self.db.commit()
+        await self.db.refresh(role)
 
-    service = RoleService(db)
+        return role
 
-    return await service.list_roles(
-        page=pagination["page"],
-        per_page=pagination["per_page"],
-    )
+    # ==========================================================
+    # List Roles
+    # ==========================================================
 
+    async def list_roles(
+        self,
+        page: int = 1,
+        per_page: int = 20,
+    ):
 
-# ==========================================================
-# Get Role
-# ==========================================================
+        offset = (page - 1) * per_page
 
-@router.get(
-    "/{role_id}",
-    response_model=RoleResponse,
-)
-async def get_role(
-    role_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Get role by ID.
-    """
+        result = await self.db.execute(
+            select(Role)
+            .offset(offset)
+            .limit(per_page)
+        )
 
-    service = RoleService(db)
+        return result.scalars().all()
 
-    return await service.get_role(role_id)
+    # ==========================================================
+    # Get Role
+    # ==========================================================
 
+    async def get_role(self, role_id):
 
-# ==========================================================
-# Update Role
-# ==========================================================
+        result = await self.db.execute(
+            select(Role)
+            .where(Role.id == str(role_id))
+        )
 
-@router.put(
-    "/{role_id}",
-    response_model=RoleResponse,
-)
-async def update_role(
-    role_id: UUID,
-    role: RoleUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Update role.
-    """
+        return result.scalar_one_or_none()
 
-    service = RoleService(db)
+    # ==========================================================
+    # Update Role
+    # ==========================================================
 
-    return await service.update_role(
+    async def update_role(
+        self,
         role_id,
-        role,
-    )
+        role_data,
+    ):
 
+        role = await self.get_role(role_id)
 
-# ==========================================================
-# Delete Role
-# ==========================================================
+        if role is None:
+            return None
 
-@router.delete("/{role_id}")
-async def delete_role(
-    role_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Delete role.
-    """
+        data = role_data.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
 
-    service = RoleService(db)
+        for key, value in data.items():
+            setattr(role, key, value)
 
-    await service.delete_role(role_id)
+        await self.db.commit()
+        await self.db.refresh(role)
 
-    return {
-        "success": True,
-        "message": "Role deleted successfully",
-    }
+        return role
 
+    # ==========================================================
+    # Delete Role
+    # ==========================================================
 
-# ==========================================================
-# Assign Permissions
-# ==========================================================
+    async def delete_role(self, role_id):
 
-@router.post("/{role_id}/permissions")
-async def assign_permissions(
-    role_id: UUID,
-    permission_ids: list[UUID],
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Assign permissions to a role.
-    """
+        role = await self.get_role(role_id)
 
-    service = RoleService(db)
+        if role is None:
+            return False
 
-    return await service.assign_permissions(
+        await self.db.delete(role)
+        await self.db.commit()
+
+        return True
+
+    # ==========================================================
+    # Assign Permissions
+    # ==========================================================
+
+    async def assign_permissions(
+        self,
         role_id,
         permission_ids,
-    )
+    ):
 
+        role = await self.get_role(role_id)
 
-# ==========================================================
-# Remove Permission
-# ==========================================================
+        if role is None:
+            return None
 
-@router.delete("/{role_id}/permissions/{permission_id}")
-async def remove_permission(
-    role_id: UUID,
-    permission_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Remove permission from role.
-    """
+        # TODO:
+        # Permission model ready hone ke baad
+        # yahan permission assign karenge.
 
-    service = RoleService(db)
+        return {
+            "success": True,
+            "message": "Permissions assigned successfully."
+        }
 
-    return await service.remove_permission(
+    # ==========================================================
+    # Remove Permission
+    # ==========================================================
+
+    async def remove_permission(
+        self,
         role_id,
         permission_id,
-    )
+    ):
 
+        role = await self.get_role(role_id)
 
-# ==========================================================
-# Get Role Permissions
-# ==========================================================
+        if role is None:
+            return None
 
-@router.get("/{role_id}/permissions")
-async def get_role_permissions(
-    role_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_org_admin),
-):
-    """
-    Get permissions assigned to a role.
-    """
+        # TODO:
+        # Permission remove logic
 
-    service = RoleService(db)
+        return {
+            "success": True,
+            "message": "Permission removed successfully."
+        }
 
-    return await service.get_role_permissions(role_id)
+    # ==========================================================
+    # Get Role Permissions
+    # ==========================================================
+
+    async def get_role_permissions(
+        self,
+        role_id,
+    ):
+
+        role = await self.get_role(role_id)
+
+        if role is None:
+            return None
+
+        # TODO:
+        # Actual permissions baad me
+
+        return []

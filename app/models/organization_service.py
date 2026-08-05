@@ -1,99 +1,89 @@
 """
 Organization Service Model
 
-Mapping between organizations and subscribed services.
+Mapping between Organizations and Services.
 """
 
+from __future__ import annotations
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    Boolean,
     ForeignKey,
-    DateTime,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 
-from app.models.base import Base
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
+
+from app.models.base import (
+    ActiveMixin,
+    Base,
+    TimestampMixin,
+    UUIDMixin,
+)
 
 
-class OrganizationService(Base):
+class OrganizationService(
+    Base,
+    UUIDMixin,
+    TimestampMixin,
+    ActiveMixin,
+):
     """
-    Organization-Service mapping table.
+    Organization-Service Mapping
     """
 
     __tablename__ = "organization_services"
 
+    # =====================================================
+    # Foreign Keys
+    # =====================================================
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
-
-
-    organization_id = Column(
-        Integer,
+    organization_id: Mapped[str] = mapped_column(
         ForeignKey(
             "organizations.id",
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-
-    service_id = Column(
-        Integer,
+    service_id: Mapped[str] = mapped_column(
         ForeignKey(
             "services.id",
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
-
-    is_active = Column(
-        Boolean,
-        default=True
-    )
-
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-
-
-    updated_at = Column(
-        DateTime(timezone=True),
-        onupdate=func.now()
-    )
-
-
+    # =====================================================
     # Relationships
+    # =====================================================
 
     organization = relationship(
         "Organization",
-        back_populates="services"
+        back_populates="services",
     )
-
 
     service = relationship(
         "Service",
-        back_populates="organizations"
+        back_populates="organizations",
     )
 
     configuration = relationship(
         "ServiceConfiguration",
         back_populates="organization_service",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
+    # =====================================================
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
-            f"<OrganizationService "
-            f"org={self.organization_id} "
-            f"service={self.service_id}>"
+            f"<OrganizationService("
+            f"organization_id={self.organization_id}, "
+            f"service_id={self.service_id})>"
         )

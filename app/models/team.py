@@ -14,7 +14,6 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
-from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import (
     Mapped,
@@ -59,7 +58,7 @@ class Team(
     # ==========================================================
 
     organization_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "organizations.id",
             ondelete="CASCADE",
@@ -115,7 +114,7 @@ class Team(
     # ==========================================================
 
     manager_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "users.id",
             ondelete="SET NULL",
