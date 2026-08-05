@@ -82,7 +82,7 @@ class Camera(
     # ========================================================
 
     organization_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -93,7 +93,7 @@ class Camera(
     # ========================================================
 
     camera_group_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey("camera_groups.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -103,7 +103,7 @@ class Camera(
     # ========================================================
 
     team_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -198,6 +198,11 @@ class Camera(
     ai_enabled: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+    )
+
+    detection_enabled: Mapped[bool] = mapped_column(
+    Boolean,
+    default=True,
     )
 
     recording_enabled: Mapped[bool] = mapped_column(

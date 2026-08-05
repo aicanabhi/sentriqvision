@@ -169,7 +169,7 @@ class Audit(
 
     organization = relationship(
         "Organization",
-        back_populates="audit_logs",
+        back_populates="audits",
     )
 
     user = relationship(

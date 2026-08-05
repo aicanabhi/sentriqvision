@@ -247,6 +247,7 @@ class ParkingSlot(
 
     organization = relationship(
         "Organization",
+        back_populates="parking_slots",
     )
 
     parking_zone = relationship(

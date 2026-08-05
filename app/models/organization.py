@@ -1,7 +1,7 @@
 """
 Organization Model
 
-Represents a tenant/company in the SentriqVision platform.
+Represents an Organization in the SentriQVision Platform.
 """
 
 from __future__ import annotations
@@ -9,11 +9,8 @@ from __future__ import annotations
 import enum
 
 from sqlalchemy import (
-    String,
-    Boolean,
     Enum,
-    Text,
-    Integer,
+    String,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -32,22 +29,24 @@ class OrganizationStatus(str, enum.Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
     SUSPENDED = "SUSPENDED"
-    EXPIRED = "EXPIRED"
 
 
 # ==========================================================
-# Organization
+# Organization Model
 # ==========================================================
-class Organization(BaseModel):
+
+class Organization(
+    BaseModel,
+):
     """
-    Organization / Company
+    Organization Model
     """
 
     __tablename__ = "organizations"
 
-    # ------------------------------------------------------
+    # ======================================================
     # Basic Information
-    # ------------------------------------------------------
+    # ======================================================
 
     organization_code: Mapped[str] = mapped_column(
         String(50),
@@ -62,93 +61,21 @@ class Organization(BaseModel):
         index=True,
     )
 
-    legal_name: Mapped[str | None] = mapped_column(
-        String(255),
-    )
-
-    description: Mapped[str | None] = mapped_column(
-        Text,
-    )
-
-    logo_url: Mapped[str | None] = mapped_column(
-        String(500),
-    )
-
-    website: Mapped[str | None] = mapped_column(
-        String(255),
-    )
-
-    # ------------------------------------------------------
-    # Contact
-    # ------------------------------------------------------
-
     email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         nullable=False,
+        index=True,
     )
 
     phone: Mapped[str | None] = mapped_column(
         String(20),
+        nullable=True,
     )
 
-    alternate_phone: Mapped[str | None] = mapped_column(
-        String(20),
-    )
-
-    # ------------------------------------------------------
-    # Address
-    # ------------------------------------------------------
-
-    address: Mapped[str | None] = mapped_column(
-        Text,
-    )
-
-    city: Mapped[str | None] = mapped_column(
-        String(100),
-    )
-
-    state: Mapped[str | None] = mapped_column(
-        String(100),
-    )
-
-    country: Mapped[str | None] = mapped_column(
-        String(100),
-    )
-
-    postal_code: Mapped[str | None] = mapped_column(
-        String(20),
-    )
-
-    timezone: Mapped[str] = mapped_column(
-        String(100),
-        default="Asia/Kolkata",
-    )
-
-    # ------------------------------------------------------
-    # Business
-    # ------------------------------------------------------
-
-    gst_number: Mapped[str | None] = mapped_column(
-        String(30),
-    )
-
-    registration_number: Mapped[str | None] = mapped_column(
-        String(100),
-    )
-
-    industry_type: Mapped[str | None] = mapped_column(
-        String(100),
-    )
-
-    employee_count: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-    )
-
-    # ------------------------------------------------------
-    # Subscription
-    # ------------------------------------------------------
+    # ======================================================
+    # Status
+    # ======================================================
 
     status: Mapped[OrganizationStatus] = mapped_column(
         Enum(OrganizationStatus),
@@ -156,14 +83,9 @@ class Organization(BaseModel):
         nullable=False,
     )
 
-    trial_enabled: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-    )
-
-    # ------------------------------------------------------
+    # ======================================================
     # Relationships
-    # ------------------------------------------------------
+    # ======================================================
 
     users = relationship(
         "User",
@@ -183,8 +105,8 @@ class Organization(BaseModel):
         cascade="all, delete-orphan",
     )
 
-    services = relationship(
-        "OrganizationService",
+    cameras = relationship(
+        "Camera",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
@@ -203,11 +125,12 @@ class Organization(BaseModel):
         cascade="all, delete-orphan",
     )
 
-    cameras = relationship(
-        "Camera",
+    services = relationship(
+        "OrganizationService",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
+
 
     parking_zones = relationship(
         "ParkingZone",
@@ -232,36 +155,39 @@ class Organization(BaseModel):
         back_populates="organization",
         cascade="all, delete-orphan",
     )
-
     audits = relationship(
         "Audit",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
-
     events = relationship(
         "Event",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
-
     detections = relationship(
         "Detection",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
-
     notifications = relationship(
         "Notification",
         back_populates="organization",
         cascade="all, delete-orphan",
     )
+    ai_models = relationship(
+        "AIModel",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+    )
 
-    # ------------------------------------------------------
+    
+    # ======================================================
 
     def __repr__(self) -> str:
         return (
             f"<Organization("
+            f"id='{self.id}', "
             f"name='{self.name}', "
             f"code='{self.organization_code}')>"
         )

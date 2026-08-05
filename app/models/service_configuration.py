@@ -16,7 +16,6 @@ from sqlalchemy import (
     String,
 )
 
-from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import (
     Mapped,
@@ -53,7 +52,7 @@ class ServiceConfiguration(
     # ======================================================
 
     organization_service_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "organization_services.id",
             ondelete="CASCADE",
@@ -64,7 +63,7 @@ class ServiceConfiguration(
     )
 
     service_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "services.id",
             ondelete="CASCADE",

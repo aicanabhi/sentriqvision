@@ -4,13 +4,14 @@ Role Schemas
 
 from __future__ import annotations
 
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.base import BaseResponseSchema, BaseSchema
-from app.schemas.permission import PermissionSummary
+from app.schemas.base import (
+    BaseSchema,
+    BaseResponseSchema,
+)
 
 
 # ==========================================================
@@ -18,9 +19,6 @@ from app.schemas.permission import PermissionSummary
 # ==========================================================
 
 class RoleBase(BaseSchema):
-    """
-    Base role schema.
-    """
 
     name: str = Field(
         ...,
@@ -28,13 +26,13 @@ class RoleBase(BaseSchema):
         max_length=100,
     )
 
-    code: str = Field(
+    display_name: str = Field(
         ...,
         min_length=2,
-        max_length=100,
+        max_length=150,
     )
 
-    description: Optional[str] = None
+    description: str | None = None
 
 
 # ==========================================================
@@ -42,13 +40,8 @@ class RoleBase(BaseSchema):
 # ==========================================================
 
 class RoleCreate(RoleBase):
-    """
-    Create new role.
-    """
 
-    organization_id: Optional[UUID] = None
-
-    permission_ids: List[UUID] = []
+    organization_id: UUID | None = None
 
 
 # ==========================================================
@@ -56,45 +49,22 @@ class RoleCreate(RoleBase):
 # ==========================================================
 
 class RoleUpdate(BaseSchema):
-    """
-    Update role.
-    """
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         default=None,
         min_length=2,
         max_length=100,
     )
 
-    description: Optional[str] = None
+    display_name: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=150,
+    )
 
-    permission_ids: Optional[List[UUID]] = None
+    description: str | None = None
 
-    is_active: Optional[bool] = None
-
-
-# ==========================================================
-# Assign Permission
-# ==========================================================
-
-class AssignPermissionRequest(BaseSchema):
-    """
-    Add permissions to role.
-    """
-
-    permission_ids: List[UUID]
-
-
-# ==========================================================
-# Remove Permission
-# ==========================================================
-
-class RemovePermissionRequest(BaseSchema):
-    """
-    Remove permissions from role.
-    """
-
-    permission_ids: List[UUID]
+    is_active: bool | None = None
 
 
 # ==========================================================
@@ -102,33 +72,14 @@ class RemovePermissionRequest(BaseSchema):
 # ==========================================================
 
 class RoleResponse(BaseResponseSchema):
-    """
-    Role response.
-    """
 
-    organization_id: Optional[UUID]
+    organization_id: UUID | None
 
     name: str
 
-    code: str
+    display_name: str
 
-    description: Optional[str]
-
-    permissions: List[PermissionSummary] = []
-
-
-# ==========================================================
-# Role Detail
-# ==========================================================
-
-class RoleDetailResponse(RoleResponse):
-    """
-    Detailed role information.
-    """
-
-    total_users: int = 0
-
-    total_permissions: int = 0
+    description: str | None
 
 
 # ==========================================================
@@ -136,11 +87,8 @@ class RoleDetailResponse(RoleResponse):
 # ==========================================================
 
 class RoleListResponse(BaseSchema):
-    """
-    Paginated roles.
-    """
 
-    roles: List[RoleResponse]
+    roles: list[RoleResponse]
 
     total: int
 
@@ -150,33 +98,10 @@ class RoleListResponse(BaseSchema):
 
 
 # ==========================================================
-# Filter
-# ==========================================================
-
-class RoleFilter(BaseSchema):
-    """
-    Role filtering.
-    """
-
-    search: Optional[str] = None
-
-    organization_id: Optional[UUID] = None
-
-    is_active: Optional[bool] = None
-
-    page: int = 1
-
-    page_size: int = 20
-
-
-# ==========================================================
 # Delete Response
 # ==========================================================
 
 class RoleDeleteResponse(BaseSchema):
-    """
-    Delete response.
-    """
 
     success: bool = True
 
@@ -188,12 +113,11 @@ class RoleDeleteResponse(BaseSchema):
 # ==========================================================
 
 class RoleSummary(BaseSchema):
-    """
-    Lightweight role information.
-    """
 
     id: UUID
 
     name: str
 
-    code: str
+    display_name: str
+
+    description: str | None

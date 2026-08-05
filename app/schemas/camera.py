@@ -4,13 +4,21 @@ Camera Schemas
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field, HttpUrl
+from pydantic import Field
 
-from app.schemas.base import BaseResponseSchema, BaseSchema
+from app.models.camera import (
+    CameraStatus,
+    CameraType,
+)
+
+from app.schemas.base import (
+    BaseResponseSchema,
+    BaseSchema,
+)
 
 
 # ==========================================================
@@ -18,9 +26,12 @@ from app.schemas.base import BaseResponseSchema, BaseSchema
 # ==========================================================
 
 class CameraBase(BaseSchema):
-    """
-    Base camera information.
-    """
+
+    camera_code: str = Field(
+        ...,
+        min_length=2,
+        max_length=50,
+    )
 
     name: str = Field(
         ...,
@@ -34,7 +45,7 @@ class CameraBase(BaseSchema):
 
     ip_address: Optional[str] = None
 
-    port: Optional[int] = Field(
+    port: int = Field(
         default=554,
         ge=1,
         le=65535,
@@ -42,7 +53,9 @@ class CameraBase(BaseSchema):
 
     manufacturer: Optional[str] = None
 
-    model: Optional[str] = None
+
+    model_name: Optional[str] = None
+
 
     serial_number: Optional[str] = None
 
@@ -52,16 +65,20 @@ class CameraBase(BaseSchema):
 # ==========================================================
 
 class CameraCreate(CameraBase):
-    """
-    Register new camera.
-    """
 
     organization_id: UUID
 
+
+    ai_enabled: bool = True
+
+    
     camera_group_id: Optional[UUID] = None
+    recording_enabled: bool = True
+    detection_enabled: bool = True
+    alerts_enabled: bool = True
 
 
-    # Stream
+    # Connection
 
     rtsp_url: Optional[str] = None
 
@@ -70,9 +87,9 @@ class CameraCreate(CameraBase):
     password: Optional[str] = None
 
 
-    # Video Configuration
+    # Stream
 
-    resolution: Optional[str] = "1920x1080"
+    resolution: str = "1920x1080"
 
     fps: int = Field(
         default=25,
@@ -80,14 +97,14 @@ class CameraCreate(CameraBase):
         le=120,
     )
 
-    codec: Optional[str] = "H264"
+    codec: str = "H264"
 
 
     # AI
 
     ai_enabled: bool = True
-
     detection_enabled: bool = True
+
 
 
 # ==========================================================
@@ -95,19 +112,16 @@ class CameraCreate(CameraBase):
 # ==========================================================
 
 class CameraUpdate(BaseSchema):
-    """
-    Update camera information.
-    """
 
-    name: Optional[str] = Field(
-        default=None,
-        min_length=2,
-        max_length=150,
-    )
+    name: Optional[str] = None
 
     description: Optional[str] = None
 
     location: Optional[str] = None
+
+    ip_address: Optional[str] = None
+
+    port: Optional[int] = None
 
 
     camera_group_id: Optional[UUID] = None
@@ -122,42 +136,20 @@ class CameraUpdate(BaseSchema):
 
     resolution: Optional[str] = None
 
-    fps: Optional[int] = Field(
-        default=None,
-        ge=1,
-        le=120,
-    )
+    fps: Optional[int] = None
+
+    codec: Optional[str] = None
 
 
     ai_enabled: Optional[bool] = None
 
+    recording_enabled: Optional[bool] = None
+
     detection_enabled: Optional[bool] = None
 
+    alerts_enabled: Optional[bool] = None
 
     is_active: Optional[bool] = None
-
-
-
-# ==========================================================
-# Stream Configuration
-# ==========================================================
-
-class CameraStreamConfig(BaseSchema):
-    """
-    Camera stream settings.
-    """
-
-    rtsp_url: str
-
-    username: Optional[str] = None
-
-    password: Optional[str] = None
-
-    fps: int = 25
-
-    resolution: str = "1920x1080"
-
-    reconnect_interval: int = 5
 
 
 
@@ -166,14 +158,13 @@ class CameraStreamConfig(BaseSchema):
 # ==========================================================
 
 class CameraResponse(BaseResponseSchema):
-    """
-    Camera response.
-    """
 
     organization_id: UUID
 
     camera_group_id: Optional[UUID]
 
+
+    camera_code: str
 
     name: str
 
@@ -184,14 +175,12 @@ class CameraResponse(BaseResponseSchema):
 
     ip_address: Optional[str]
 
-    port: Optional[int]
+    port: int
 
 
-    manufacturer: Optional[str]
+    rtsp_url: Optional[str]
 
-    model: Optional[str]
-
-    serial_number: Optional[str]
+    username: Optional[str]
 
 
     resolution: Optional[str]
@@ -201,12 +190,19 @@ class CameraResponse(BaseResponseSchema):
     codec: Optional[str]
 
 
+    camera_type: CameraType
+
+    status: CameraStatus
+
+
     ai_enabled: bool
+
+    recording_enabled: bool
 
     detection_enabled: bool
 
+    alerts_enabled: bool
 
-    is_active: bool
 
 
 # ==========================================================
@@ -214,83 +210,61 @@ class CameraResponse(BaseResponseSchema):
 # ==========================================================
 
 class CameraDetailResponse(CameraResponse):
-    """
-    Detailed camera information.
-    """
 
-    group_name: Optional[str] = None
+    manufacturer: Optional[str]
 
-    stream_status: Optional[str] = None
+    model_name: Optional[str]
 
-    last_connected: Optional[datetime] = None
+    serial_number: Optional[str]
 
-    cpu_usage: Optional[float] = None
+    firmware_version: Optional[str]
 
-    gpu_usage: Optional[float] = None
+
+    building: Optional[str]
+
+    floor: Optional[str]
+
+    zone: Optional[str]
+
+
+    snapshot_url: Optional[str]
+
+    onvif_url: Optional[str]
+
+
+    bitrate: Optional[int]
+
+
+    latitude: Optional[float]
+
+    longitude: Optional[float]
+
+
+    last_seen: Optional[str]
 
 
 
 # ==========================================================
-# Camera Status
+# Status Response
 # ==========================================================
 
 class CameraStatusResponse(BaseSchema):
-    """
-    Live camera health.
-    """
 
     camera_id: UUID
 
-    online: bool
+    status: CameraStatus
 
-    stream_available: bool
+    is_active: bool
 
-    last_check: datetime
-
-    error_message: Optional[str] = None
+    last_seen: Optional[str]
 
 
 
 # ==========================================================
-# Camera Filter
-# ==========================================================
-
-class CameraFilter(BaseSchema):
-    """
-    Camera search filters.
-    """
-
-    organization_id: Optional[UUID] = None
-
-    camera_group_id: Optional[UUID] = None
-
-
-    search: Optional[str] = None
-
-
-    manufacturer: Optional[str] = None
-
-
-    is_active: Optional[bool] = None
-
-
-    online: Optional[bool] = None
-
-
-    page: int = 1
-
-    page_size: int = 20
-
-
-
-# ==========================================================
-# Camera List
+# List Response
 # ==========================================================
 
 class CameraListResponse(BaseSchema):
-    """
-    Paginated camera list.
-    """
 
     cameras: list[CameraResponse]
 
@@ -303,7 +277,7 @@ class CameraListResponse(BaseSchema):
 
 
 # ==========================================================
-# Delete
+# Delete Response
 # ==========================================================
 
 class CameraDeleteResponse(BaseSchema):

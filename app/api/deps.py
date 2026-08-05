@@ -4,13 +4,24 @@ API Dependencies
 Shared dependencies for FastAPI routes.
 """
 
-from typing import AsyncGenerator
-
-from fastapi import Depends, Header, HTTPException, Query, status
+from fastapi import (
+    Depends,
+    HTTPException,
+    Query,
+    
+    status,
+)
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_db
 
+
+# ==========================================================
+# OAuth2 JWT Scheme
+# ==========================================================
+
+security = HTTPBearer()
 
 
 # ==========================================================
@@ -28,12 +39,20 @@ def pagination_params(
         le=100
     ),
 ):
-
     return {
         "page": page,
         "per_page": per_page,
         "skip": (page - 1) * per_page,
     }
+
+
+# ==========================================================
+# Database Dependency
+# ==========================================================
+
+async def get_session() -> AsyncSession:
+    async for session in get_db():
+        yield session
 
 
 
@@ -42,62 +61,35 @@ def pagination_params(
 # ==========================================================
 
 async def get_current_user(
-    authorization: str | None = Header(
-        default=None,
-        alias="Authorization"
-    )
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
+    token = credentials.credentials
 
-    """
-    Get logged in user from JWT.
-    """
-
-    if not authorization:
-
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization token missing"
+            detail="Token missing",
         )
 
-
-    if not authorization.startswith("Bearer "):
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token format"
-        )
-
-
-    token = authorization.split(" ")[1]
-
-
-    # TODO:
-    # Decode JWT
-    # Fetch user from database
+    # TODO: Verify JWT token here
 
     return {
         "id": 1,
         "email": "admin@sentriqvision.com",
         "role": "super_admin",
-        "token": token
+        "token": token,
     }
-
-
-
 # ==========================================================
 # Active User
 # ==========================================================
 
 async def get_current_active_user(
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
 
     """
-    Check user status.
+    Check active user.
     """
-
-    # TODO:
-    # Check is_active from database
 
     return current_user
 
@@ -108,18 +100,14 @@ async def get_current_active_user(
 # ==========================================================
 
 async def get_current_super_admin(
-    current_user = Depends(get_current_active_user)
+    current_user=Depends(get_current_active_user)
 ):
-
-    """
-    Super Admin access.
-    """
 
     if current_user["role"] != "super_admin":
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Super Admin access required"
+            detail="Super Admin access required",
         )
 
 
@@ -132,12 +120,12 @@ async def get_current_super_admin(
 # ==========================================================
 
 async def get_current_org_admin(
-    current_user = Depends(get_current_active_user)
+    current_user=Depends(get_current_active_user)
 ):
 
     allowed_roles = [
         "super_admin",
-        "organization_admin"
+        "organization_admin",
     ]
 
 
@@ -145,7 +133,7 @@ async def get_current_org_admin(
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Organization admin access required"
+            detail="Organization admin access required",
         )
 
 
@@ -160,7 +148,7 @@ async def get_current_org_admin(
 def require_permission(permission_name: str):
 
     async def checker(
-        current_user = Depends(get_current_active_user)
+        current_user=Depends(get_current_active_user)
     ):
 
         # TODO:

@@ -12,12 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import (
     get_db,
     get_current_super_admin,
-    pagination_params,
 )
 from app.schemas.organization import (
     OrganizationCreate,
     OrganizationUpdate,
     OrganizationResponse,
+    OrganizationListResponse,
 )
 from app.services.organization_service import OrganizationService
 
@@ -44,7 +44,9 @@ async def create_organization(
 
     service = OrganizationService(db)
 
-    return await service.create_organization(organization)
+    return await service.create(
+        organization.model_dump()
+    )
 
 
 # ==========================================================
@@ -55,19 +57,20 @@ async def create_organization(
     "",
 )
 async def list_organizations(
-    pagination=Depends(pagination_params),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_super_admin),
 ):
     """
-    Get all organizations.
+    List all organizations.
     """
 
     service = OrganizationService(db)
 
     return await service.list_organizations(
-        page=pagination["page"],
-        per_page=pagination["per_page"],
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -90,7 +93,9 @@ async def get_organization(
 
     service = OrganizationService(db)
 
-    return await service.get_organization(organization_id)
+    return await service.get_organization(
+        organization_id
+    )
 
 
 # ==========================================================
@@ -125,6 +130,7 @@ async def update_organization(
 
 @router.delete(
     "/{organization_id}",
+    status_code=status.HTTP_200_OK,
 )
 async def delete_organization(
     organization_id: UUID,
@@ -137,11 +143,13 @@ async def delete_organization(
 
     service = OrganizationService(db)
 
-    await service.delete_organization(organization_id)
+    await service.delete_organization(
+        organization_id
+    )
 
     return {
         "success": True,
-        "message": "Organization deleted successfully",
+        "message": "Organization deleted successfully.",
     }
 
 
@@ -151,6 +159,7 @@ async def delete_organization(
 
 @router.patch(
     "/{organization_id}/activate",
+    response_model=OrganizationResponse,
 )
 async def activate_organization(
     organization_id: UUID,
@@ -163,7 +172,9 @@ async def activate_organization(
 
     service = OrganizationService(db)
 
-    return await service.activate_organization(organization_id)
+    return await service.activate_organization(
+        organization_id
+    )
 
 
 # ==========================================================
@@ -172,6 +183,7 @@ async def activate_organization(
 
 @router.patch(
     "/{organization_id}/deactivate",
+    response_model=OrganizationResponse,
 )
 async def deactivate_organization(
     organization_id: UUID,

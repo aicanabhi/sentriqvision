@@ -6,20 +6,27 @@ User Management Endpoints
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    status,
+    HTTPException,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
     get_db,
     get_current_active_user,
     get_current_org_admin,
-    pagination_params,
 )
+
 from app.schemas.user import (
     UserCreate,
     UserUpdate,
     UserResponse,
 )
+
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -39,12 +46,7 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Create a new user.
-    """
-
     service = UserService(db)
-
     return await service.create_user(user)
 
 
@@ -59,10 +61,6 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    List users.
-    """
-
     service = UserService(db)
 
     return await service.list_users(
@@ -84,13 +82,17 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    Get user by ID.
-    """
-
     service = UserService(db)
 
-    return await service.get_user(user_id)
+    user = await service.get_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
 
 
 # ==========================================================
@@ -107,37 +109,41 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Update user.
-    """
-
     service = UserService(db)
 
-    return await service.update_user(
+    user = await service.update_user(
         user_id,
         user,
     )
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
 
 
 # ==========================================================
 # Delete User
 # ==========================================================
 
-@router.delete(
-    "/{user_id}",
-)
+@router.delete("/{user_id}")
 async def delete_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Delete user.
-    """
-
     service = UserService(db)
 
-    await service.delete_user(user_id)
+    success = await service.delete_user(user_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
 
     return {
         "success": True,
@@ -151,19 +157,24 @@ async def delete_user(
 
 @router.patch(
     "/{user_id}/activate",
+    response_model=UserResponse,
 )
 async def activate_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Activate user.
-    """
-
     service = UserService(db)
 
-    return await service.activate_user(user_id)
+    user = await service.activate_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
 
 
 # ==========================================================
@@ -172,19 +183,24 @@ async def activate_user(
 
 @router.patch(
     "/{user_id}/deactivate",
+    response_model=UserResponse,
 )
 async def deactivate_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Deactivate user.
-    """
-
     service = UserService(db)
 
-    return await service.deactivate_user(user_id)
+    user = await service.deactivate_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
 
 
 # ==========================================================
@@ -199,54 +215,68 @@ async def reset_password(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_org_admin),
 ):
-    """
-    Reset user password.
-    """
-
     service = UserService(db)
 
-    return await service.reset_password(user_id)
+    result = await service.reset_password(user_id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return result
 
 
 # ==========================================================
-# User Profile
+# My Profile
 # ==========================================================
 
 @router.get(
     "/me/profile",
+    response_model=UserResponse,
 )
 async def my_profile(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    Logged-in user profile.
-    """
-
     service = UserService(db)
 
-    return await service.get_profile(current_user["id"])
+    user = await service.get_profile(current_user["id"])
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return user
 
 
 # ==========================================================
-# Update Profile
+# Update My Profile
 # ==========================================================
 
 @router.put(
     "/me/profile",
+    response_model=UserResponse,
 )
 async def update_profile(
     user: UserUpdate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    Update own profile.
-    """
-
     service = UserService(db)
 
-    return await service.update_profile(
+    updated_user = await service.update_profile(
         current_user["id"],
         user,
     )
+
+    if updated_user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return updated_user

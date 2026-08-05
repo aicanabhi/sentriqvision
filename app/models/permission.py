@@ -102,6 +102,14 @@ class Permission(
         index=True,
     )
 
+
+    code: Mapped[str] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
     display_name: Mapped[str] = mapped_column(
         String(200),
         nullable=False,

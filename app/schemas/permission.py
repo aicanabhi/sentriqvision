@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import Field
 
+from app.models.permission import PermissionCategory
 from app.schemas.base import BaseResponseSchema, BaseSchema
 
 
@@ -33,6 +34,14 @@ class PermissionBase(BaseSchema):
         max_length=100,
     )
 
+    display_name: str = Field(
+        ...,
+        min_length=2,
+        max_length=200,
+    )
+
+    category: PermissionCategory
+
     module: str = Field(
         ...,
         min_length=2,
@@ -54,7 +63,7 @@ class PermissionBase(BaseSchema):
 
 class PermissionCreate(PermissionBase):
     """
-    Create permission.
+    Create permission schema.
     """
 
     pass
@@ -66,13 +75,39 @@ class PermissionCreate(PermissionBase):
 
 class PermissionUpdate(BaseSchema):
     """
-    Update permission.
+    Update permission schema.
     """
 
     name: Optional[str] = Field(
         default=None,
         min_length=2,
         max_length=100,
+    )
+
+    code: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+    )
+
+    display_name: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=200,
+    )
+
+    category: Optional[PermissionCategory] = None
+
+    module: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=100,
+    )
+
+    action: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=50,
     )
 
     description: Optional[str] = None
@@ -86,12 +121,16 @@ class PermissionUpdate(BaseSchema):
 
 class PermissionResponse(BaseResponseSchema):
     """
-    Permission response.
+    Permission response schema.
     """
+
+    name: str
 
     code: str
 
-    name: str
+    display_name: str
+
+    category: PermissionCategory
 
     module: str
 
@@ -111,9 +150,13 @@ class PermissionSummary(BaseSchema):
 
     id: UUID
 
+    name: str
+
     code: str
 
-    name: str
+    display_name: str
+
+    category: PermissionCategory
 
 
 # ==========================================================
@@ -140,12 +183,14 @@ class PermissionListResponse(BaseSchema):
 
 class PermissionFilter(BaseSchema):
     """
-    Search/filter permissions.
+    Permission search filters.
     """
 
     search: Optional[str] = None
 
     module: Optional[str] = None
+
+    category: Optional[PermissionCategory] = None
 
     action: Optional[str] = None
 

@@ -16,8 +16,6 @@ from sqlalchemy import (
     String,
     Text,
 )
-
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -72,7 +70,7 @@ class Role(
     # ======================================================
 
     organization_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=True),
+        String,
         ForeignKey(
             "organizations.id",
             ondelete="CASCADE",

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import settings
-from app.database.base import Base
+from app.models.base import Base
 import app.models  # Ensure all models are registered
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ async def seed_super_admin(session: AsyncSession) -> None:
 
 
 async def create_tables() -> None:
+    print(Base.metadata.tables.keys())
     """Create database tables and seed initial data."""
     global engine, async_session_factory, AsyncSessionLocal
     try:

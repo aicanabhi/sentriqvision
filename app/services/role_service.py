@@ -2,54 +2,101 @@
 Role Service
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.role import Role
 
 
 class RoleService:
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def get_all(self):
-        return self.db.query(Role).all()
+    # ==========================================================
+    # Create Role
+    # ==========================================================
 
-    def get_by_id(self, role_id):
-        return (
-            self.db.query(Role)
-            .filter(Role.id == role_id)
-            .first()
+    async def create_role(self, role_data):
+        data = role_data.model_dump()
+
+        # UUID ko string me convert karo
+        if data.get("organization_id"):
+            data["organization_id"] = str(data["organization_id"])
+            role = Role(**data)
+            self.db.add(role)
+            await self.db.commit()
+            await self.db.refresh(role)
+            return role
+
+    # ==========================================================
+    # List Roles
+    # ==========================================================
+
+    async def list_roles(self):
+
+        result = await self.db.execute(
+            select(Role)
         )
 
-    def create(self, data):
-        role = Role(**data)
-        self.db.add(role)
-        self.db.commit()
-        self.db.refresh(role)
-        return role
+        return result.scalars().all()
 
-    def update(self, role_id, data):
-        role = self.get_by_id(role_id)
+    # ==========================================================
+    # Get Role
+    # ==========================================================
+
+    async def get_role(self, role_id):
+
+        result = await self.db.execute(
+            select(Role).where(Role.id == str(role_id))
+        )
+
+        return result.scalar_one_or_none()
+
+    # ==========================================================
+    # Update Role
+    # ==========================================================
+
+    async def update_role(
+        self,
+        role_id,
+        role_data,
+    ):
+
+        role = await self.get_role(role_id)
 
         if not role:
             return None
 
+        data = role_data.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
+
         for key, value in data.items():
+
+
+            if key == "organization_id" and value:
+                value = str(value)
             setattr(role, key, value)
 
-        self.db.commit()
-        self.db.refresh(role)
+        await self.db.commit()
+        await self.db.refresh(role)
 
         return role
 
-    def delete(self, role_id):
-        role = self.get_by_id(role_id)
+    # ==========================================================
+    # Delete Role
+    # ==========================================================
+
+    async def delete_role(self, role_id):
+
+        role = await self.get_role(role_id)
 
         if not role:
             return False
 
-        self.db.delete(role)
-        self.db.commit()
+        await self.db.delete(role)
+        await self.db.commit()
 
         return True
