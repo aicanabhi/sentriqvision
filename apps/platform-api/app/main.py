@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from app.config import settings
 from app.database.connection import AsyncSessionLocal
-# --------------------------------------------
+from app.routes.organizations import router as organization_router# --------------------------------------------
 # Create FastAPI application
 # --------------------------------------------
 
@@ -11,6 +11,8 @@ app = FastAPI(
     version=settings.app_version,
     description="Enterprise CCTV AI Intelligence Platform",
 )
+
+app.include_router(organization_router)
 
 # --------------------------------------------------------------
 # Health Check
