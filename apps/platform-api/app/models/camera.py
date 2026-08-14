@@ -60,7 +60,7 @@ class Camera(Base):
     fps: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
-        default=25,
+        default=5,
     )
 
     status: Mapped[str] = mapped_column(
