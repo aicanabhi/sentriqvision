@@ -4,6 +4,7 @@ from app.config import settings
 from app.database.connection import AsyncSessionLocal
 from app.routes.organizations import router as organization_router
 from app.routes.sites import router as site_router
+from app.routes.zones import router as zone_router
 
 # --------------------------------------------
 # Create FastAPI application
@@ -17,6 +18,7 @@ app = FastAPI(
 
 app.include_router(organization_router)
 app.include_router(site_router)
+app.include_router(zone_router)
 
 # --------------------------------------------------------------
 # Health Check
