@@ -8,6 +8,7 @@ from app.routes.zones import router as zone_router
 from app.routes.cameras import router as cameras_router
 from app.routes.camera_modules import router as camera_modules_router
 from app.routes.modules import router as modules_router
+from app.routes.module_configs import router as module_configs_router
 
 # --------------------------------------------
 # Create FastAPI application
@@ -25,6 +26,7 @@ app.include_router(zone_router)
 app.include_router(cameras_router)
 app.include_router(camera_modules_router)
 app.include_router(modules_router)
+app.include_router(module_configs_router)
 
 # --------------------------------------------------------------
 # Health Check
