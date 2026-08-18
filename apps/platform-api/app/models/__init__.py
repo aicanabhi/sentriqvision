@@ -6,6 +6,8 @@ from .camera import Camera
 from .module import Module
 from .camera_module import CameraModule
 from .module_config import ModuleConfig
+from .event import Event
+
 __all__ = [
     "Base",
     "Organization",
@@ -15,6 +17,7 @@ __all__ = [
     "Module",
     "CameraModule",
     "ModuleConfig",
+    "Event",
 ]
 
 """
