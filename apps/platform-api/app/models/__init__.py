@@ -7,6 +7,7 @@ from .module import Module
 from .camera_module import CameraModule
 from .module_config import ModuleConfig
 from .event import Event
+from .event_evidence import EventEvidence
 
 __all__ = [
     "Base",
@@ -18,6 +19,7 @@ __all__ = [
     "CameraModule",
     "ModuleConfig",
     "Event",
+    "EventEvidence",
 ]
 
 """
