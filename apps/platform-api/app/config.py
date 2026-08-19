@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     app_name: str = "CCTV AI Platform"
     app_version: str = "0.1.0"
 
+    #JWT authentication configuration
+    jwt_secret_key: str = "change-this-in-production"
+    access_token_expire_minutes: int = 60
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../../.env",
         case_sensitive=False,
         extra="ignore",
     )

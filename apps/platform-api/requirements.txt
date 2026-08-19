@@ -3,4 +3,6 @@ uvicorn[standard]
 sqlalchemy
 asyncpg
 pydantic-settings
-alembic
+email-validator
+argon2-cffi
+PyJWT
