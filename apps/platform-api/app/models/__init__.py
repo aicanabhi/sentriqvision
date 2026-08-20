@@ -9,6 +9,8 @@ from .module_config import ModuleConfig
 from .event import Event
 from .event_evidence import EventEvidence
 from .account import Account
+from .account_site_access import AccountSiteAccess
+from .account_camera_access import AccountCameraAccess
 
 __all__ = [
     "Base",
@@ -21,6 +23,9 @@ __all__ = [
     "ModuleConfig",
     "Event",
     "EventEvidence",
+    "Account",
+    "AccountSiteAccess",
+    "AccountCameraAccess",
 ]
 
 """

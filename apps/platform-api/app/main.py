@@ -12,6 +12,7 @@ from app.routes.module_configs import router as module_configs_router
 from app.routes.events import router as events_router
 from app.routes.event_evidence import router as event_evidence_router
 from app.routes.auth import router as auth_router
+from app.routes.access import router as access_router
 
 # --------------------------------------------
 # Create FastAPI application
@@ -33,6 +34,7 @@ app.include_router(module_configs_router)
 app.include_router(events_router)
 app.include_router(event_evidence_router)
 app.include_router(auth_router)
+app.include_router(access_router)
 
 # --------------------------------------------------------------
 # Health Check
