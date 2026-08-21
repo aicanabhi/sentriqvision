@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import AsyncSessionLocal
 from app.schemas.zone import ZoneCreate, ZoneResponse
 from app.services.zone import ZoneService
+from app.auth import AccountRole
+from app.models.site import Site
+from app.security.authorization import require_roles
 
 router = APIRouter(
     prefix="/zones",
@@ -48,8 +51,20 @@ async def get_zone(
 @router.post("/", response_model=ZoneResponse)
 async def create_zone(
         data: ZoneCreate,
+        account=Depends(require_roles(AccountRole.SUPER_ADMIN, AccountRole.ADMIN)),
         session: AsyncSession = Depends(get_db),
 ):
+    site = await session.get(Site, data.site_id)
+
+    if site is None:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    if (
+        account.role == AccountRole.ADMIN.value and
+        site.organization_id != account.organization_id
+    ):
+        raise HTTPException(status_code=403, detail="Cannot create a zone outside your organization")
+
     service = ZoneService(session)
 
     try:
@@ -65,6 +80,7 @@ async def create_zone(
 
     await session.commit()
     await session.refresh(zone)
+
     return zone
 
 # Delete zone

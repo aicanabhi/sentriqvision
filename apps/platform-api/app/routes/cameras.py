@@ -4,6 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from app.database.connection import AsyncSessionLocal
 from app.schemas.camera import CameraCreate, CameraResponse
 from app.services.camera import CameraService
+from app.auth import AccountRole
+from app.models.site import Site
+from app.security.authorization import require_roles
 
 router = APIRouter(
     tags=["cameras"],
@@ -55,8 +58,23 @@ async def get_camera(
 @router.post("/", response_model=CameraResponse)
 async def create_camera(
         data: CameraCreate,
+        account=Depends(require_roles(AccountRole.SUPER_ADMIN, AccountRole.ADMIN)),
         session: AsyncSession = Depends(get_db),
 ):
+    # The site is the source of truth for organization ownership.
+    site = await session.get(Site, data.site_id)
+
+    if site is None:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    # Organization Admins may only create cameras on site belonging to their
+    # organization.
+    if(
+        account.role == AccountRole.ADMIN.value and
+        site.organization_id != account.organization_id
+    ):
+        raise HTTPException(status_code=403, detail="Cannot create a camera outside your organization")
+
     service = CameraService(session)
 
     try:
