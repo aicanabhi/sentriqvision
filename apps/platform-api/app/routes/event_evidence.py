@@ -4,6 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import AsyncSessionLocal
 from app.schemas.event_evidence import EventEvidenceCreate, EventEvidenceResponse
 from app.services.event_evidence import EventEvidenceService
+from app.models.event import Event
+from app.models.camera import Camera
+from app.models.site import Site
+from app.repositories.access import AccessRepository
+from app.security.dependencies import get_current_account
+from app.services.access import AccessService
 
 router = APIRouter(
     prefix="/event_evidence",
@@ -24,8 +30,32 @@ async def list_evidence(session: AsyncSession = Depends(get_db)):
 @router.get("/event/{event_id}", response_model=list[EventEvidenceResponse])
 async def list_evidence_by_event(
         event_id: uuid.UUID,
+        account=Depends(get_current_account),
         session: AsyncSession = Depends(get_db),
 ):
+    event = await session.get(Event, event_id)
+
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    camera = await session.get(Camera, event.camera_id)
+
+    if camera is None:
+        raise HTTPException(status_code=404, detail="Camera site not found")
+
+    repository = AccessRepository(session)
+    access_service = AccessService(repository)
+
+    allowed = await access_service.has_camera_access(
+        account=account,
+        camera_id=camera.id,
+        camera_site_id=camera.site_id,
+        camera_site_organization_id=Site.organization_id,
+    )
+
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     service = EventEvidenceService(session)
     return await service.get_by_event(event_id)
 

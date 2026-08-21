@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from app.database.connection import AsyncSessionLocal
 from app.schemas.site import SiteCreate, SiteResponse
 from app.services.site import SiteService
+from app.auth import AccountRole
+from app.security.authorization import require_roles
 
 router = APIRouter(
     prefix="/sites",
@@ -35,8 +37,17 @@ async def get_site(
 @router.post("/", response_model=SiteResponse)
 async def create_site(
         data: SiteCreate,
+        account=Depends(require_roles(AccountRole.SUPER_ADMIN, AccountRole.ADMIN)),
         session: AsyncSession = Depends(get_db),
 ):
+
+    # Organization Admins can only create sites inside their own organization.
+    if (
+        account.role == AccountRole.ADMIN.value and
+        data.organization_id != account.organization_id
+    ):
+        raise HTTPException(status_code=403, detail="Cannot create a site outside your organization")
+
     service = SiteService(session)
 
     try:

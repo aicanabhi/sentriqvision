@@ -4,6 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import AsyncSessionLocal
 from app.schemas.event import EventCreate, EventResponse
 from app.services.event import EventService
+from app.models.camera import Camera
+from app.models.site import Site
+from app.repositories.access import AccessRepository
+from app.security.dependencies import get_current_account
+from app.services.access import AccessService
 
 router = APIRouter(
     prefix="/events",
@@ -22,8 +27,33 @@ async def list_events(session: AsyncSession = Depends(get_db)):
 
 # Get events by camera
 @router.get("/camera/{camera_id}", response_model=list[EventResponse])
-async def list_events_by_camera(camera_id: uuid.UUID, session: AsyncSession = Depends(get_db)):
+async def list_events_by_camera(camera_id: uuid.UUID, account=Depends(get_current_account), session: AsyncSession = Depends(get_db)):
+
+    camera = await session.get(Camera, camera_id)
+
+    if camera is None:
+        raise HTTPException(status_code=404, detail="Camera not found")
+
+    site = await session.get(Site, camera.site_id)
+
+    if site is None:
+        raise HTTPException(status_code=404, detail="Camera Site not found")
+
+    repository = AccessRepository(session)
+    access_service = AccessService(repository)
+
+    allowed = await access_service.has_camera_access(
+        account=account,
+        camera_id=camera.id,
+        camera_site_id=camera.site_id,
+        camera_site_organization_id=site.organization_id,
+    )
+
+    if not allowed:
+        raise HTTPException(status_code=403, detail="You do not have access to this camera")
+
     service = EventService(session)
+
     return await service.get_by_camera(camera_id)
 
 # Get events by zone
